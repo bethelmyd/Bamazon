@@ -1,0 +1,19 @@
+{
+  "name": "bamazon",
+  "version": "1.0.0",
+  "description": "Amazon-like Application",
+  "main": "bamazon.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bethelmyd/Bamazon.git"
+  },
+  "author": "DGB",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bethelmyd/Bamazon/issues"
+  },
+  "homepage": "https://github.com/bethelmyd/Bamazon#readme"
+}
