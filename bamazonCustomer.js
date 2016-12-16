@@ -31,7 +31,7 @@ function promptUser()
     inquirer.prompt([
            {
                 name: "itemId",
-                message: "Which item would you like to buy? (C - cancel) ",
+                message: "Which item would you like to buy? (E - exit) ",
                 type: "input",
                 validate: function(input){
                     if(input.length == 0){
@@ -42,7 +42,7 @@ function promptUser()
             },
             {
                 when: function (response) {
-                        return response.itemId.toUpperCase() != 'C';
+                        return response.itemId.toUpperCase() != 'E';
                     },
                 name: "quantity",
                 message: "Enter the quantity: ",
@@ -59,8 +59,8 @@ function promptUser()
 
 function processPurchase(selection){
     var itemId = selection.itemId;
-    if(itemId.toUpperCase() === 'C'){
-        showBill();
+    if(itemId.toUpperCase() === 'E'){
+        showCart();
         connection.end();
         process.exit(0);
     }
@@ -137,6 +137,7 @@ function tryToFillOrder(itemId, quantity, result){
 
     stockQuantity -= quantity;
  //   console.log(itemId + " " + stockQuantity);
+    showCart();
     updateQuantity(itemId, stockQuantity);
 }
 
@@ -154,7 +155,9 @@ function updateQuantity(itemId, stockQuantity){
     });    
 }
 
-function showBill(){
+function showCart(){
+    if(cart.length == 0) return;
+    console.log("Your current cart:");
     var total = 0;
     var cartTable = new Table({
         head: ['Product Name', 'Price (USD)', 'Quantity', 'Cost'],
