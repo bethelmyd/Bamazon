@@ -46,7 +46,7 @@ function promptUser()
                 type: "input",
                 validate: function(input){
                     if(isNaN(input) || input.length == 0 || parseInt(input) < 0){
-                        return "Please enter a valid number > 0.";
+                        return "Please enter a valid number >= 0.";
                     }
                     return true;
                 }
@@ -85,7 +85,7 @@ function processPurchase(selection){
 
 function listProducts()
 {
-    var query = "select item_id, product_name, price from product";
+    var query = "select item_id, product_name, price from product where stock_quantity > 0";
 
     //console.log(query);
 
@@ -114,10 +114,6 @@ var displayResults =  function(results){
     console.log(ourTable.toString());
 };
 
-// var department = "";
-// var whereClause = {
-//     //department_name: department
-// };
 
 function start(){
     listProducts();
