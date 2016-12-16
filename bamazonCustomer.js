@@ -62,7 +62,7 @@ function processPurchase(selection){
     }
     var quantity = parseInt(selection.quantity);
     //see if item is in database
-    var query = "select item_id from product where ?";
+    var query = "select item_id, stock_quantity from product where ?";
     var whereClause = {
         item_id: itemId
     };
@@ -76,8 +76,7 @@ function processPurchase(selection){
              listProducts();
              return;
          }
-         console.log("Found it");
-         promptUser();
+         tryToFillOrder(itemId, quantity, res);
          //connection.end();
     });
     
@@ -101,7 +100,7 @@ function listProducts()
     });
 }
 
-var displayResults =  function(results){
+function displayResults(results){
     //console.log(results);
     var ourTable = new Table({
         head: ['Item ID', 'Product Name', 'Price (USD)', 'Department'],
@@ -115,6 +114,34 @@ var displayResults =  function(results){
     console.log(ourTable.toString());
 };
 
+function tryToFillOrder(itemId, quantity, result){
+    var stockQuantity = parseInt(result[0].stock_quantity);
+ //   console.log(quantity + " " + stockQuantity);
+    if(quantity > stockQuantity)
+    {
+        console.log("Cannot supply more than " + stockQuantity);
+        promptUser();
+        return;
+    }
+    console.log("Thanks for your order.");
+    stockQuantity -= quantity;
+ //   console.log(itemId + " " + stockQuantity);
+    updateQuantity(itemId, stockQuantity);
+}
+
+function updateQuantity(itemId, stockQuantity){
+    var query = "update product set stock_quantity = " + stockQuantity + " ";
+    query += "where item_id = '" + itemId + "'";
+
+     connection.query(query, function(err, res){
+         if(err){
+             throw err;
+         }
+
+         //console.log(res);
+         listProducts();
+    });    
+}
 
 function start(){
     listProducts();
