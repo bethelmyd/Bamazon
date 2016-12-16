@@ -3,8 +3,11 @@
 var mysql = require("mysql");
 var Table = require("cli-table");
 var inquirer = require("inquirer");
+var CartItem = require("./cartItem.js");
 
-//var ourTable = new Table();
+/* Globals */
+var cart = [];
+/**************************/
 
 var connection = mysql.createConnection({
   host: "localhost",
@@ -57,12 +60,13 @@ function promptUser()
 function processPurchase(selection){
     var itemId = selection.itemId;
     if(itemId.toUpperCase() === 'C'){
+        showBill();
         connection.end();
         process.exit(0);
     }
     var quantity = parseInt(selection.quantity);
     //see if item is in database
-    var query = "select item_id, stock_quantity from product where ?";
+    var query = "select * from product where ?"; //"select item_id, stock_quantity from product where ?";
     var whereClause = {
         item_id: itemId
     };
@@ -123,7 +127,14 @@ function tryToFillOrder(itemId, quantity, result){
         promptUser();
         return;
     }
-    console.log("Thanks for your order.");
+    console.log("Item added to cart.");
+    var cartItem = new CartItem();
+    cartItem.product_name = result[0].product_name;
+    cartItem.price = result[0].price;
+    cartItem.quantity = quantity;
+    cartItem.cost = quantity * cartItem.price;
+    cart.push(cartItem);
+
     stockQuantity -= quantity;
  //   console.log(itemId + " " + stockQuantity);
     updateQuantity(itemId, stockQuantity);
@@ -141,6 +152,23 @@ function updateQuantity(itemId, stockQuantity){
          //console.log(res);
          listProducts();
     });    
+}
+
+function showBill(){
+    var total = 0;
+    var cartTable = new Table({
+        head: ['Product Name', 'Price (USD)', 'Quantity', 'Cost'],
+        colAligns: ['left', 'right', 'right', 'right']
+    });
+    for(var i = 0; i < cart.length; i++){
+        var cartItem = cart[i];
+        total += cartItem.cost;
+       // console.log(JSON.parse(JSON.stringify(record)));
+        cartTable.push([cartItem.product_name, cartItem.price.toFixed(2), cartItem.quantity, cartItem.cost.toFixed(2)]);
+    }
+    
+    cartTable.push(["", "", "Total", total.toFixed(2)]);
+    console.log(cartTable.toString());
 }
 
 function start(){
