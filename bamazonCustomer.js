@@ -85,7 +85,8 @@ function processPurchase(selection){
 
 function listProducts()
 {
-    var query = "select item_id, product_name, price from product where stock_quantity > 0";
+    var query = "select item_id, product_name, price, department_name from product where stock_quantity > 0 "
+    query += "order by department_name ASC, product_name ASC";
 
     //console.log(query);
 
@@ -103,13 +104,13 @@ function listProducts()
 var displayResults =  function(results){
     //console.log(results);
     var ourTable = new Table({
-        head: ['Item ID', 'Product Name', 'Price (USD)'],
-        colAligns: ['left', 'left', 'right']
+        head: ['Item ID', 'Product Name', 'Price (USD)', 'Department'],
+        colAligns: ['left', 'left', 'right', 'left']
     });
     for(var i = 0; i < results.length; i++){
         var record = results[i];
        // console.log(JSON.parse(JSON.stringify(record)));
-        ourTable.push([record.item_id, record.product_name, record.price.toFixed(2)]);
+        ourTable.push([record.item_id, record.product_name, record.price.toFixed(2), record.department_name]);
     }
     console.log(ourTable.toString());
 };
