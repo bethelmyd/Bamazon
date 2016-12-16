@@ -28,7 +28,7 @@ function promptUser()
     inquirer.prompt([
            {
                 name: "itemId",
-                message: "Which item would you like to buy? ",
+                message: "Which item would you like to buy? (C - cancel) ",
                 type: "input",
                 validate: function(input){
                     if(input.length == 0){
@@ -38,6 +38,9 @@ function promptUser()
                 }
             },
             {
+                when: function (response) {
+                        return response.itemId.toUpperCase() != 'C';
+                    },
                 name: "quantity",
                 message: "Enter the quantity: ",
                 type: "input",
@@ -48,10 +51,35 @@ function promptUser()
                     return true;
                 }
             }
-    ]).then(processSelection);
+    ]).then(processPurchase);
 }
 
-function processSelection(selection){
+function processPurchase(selection){
+    var itemId = selection.itemId;
+    if(itemId.toUpperCase() === 'C'){
+        connection.end();
+        process.exit(0);
+    }
+    var quantity = parseInt(selection.quantity);
+    //see if item is in database
+    var query = "select item_id from product where ?";
+    var whereClause = {
+        item_id: itemId
+    };
+     connection.query(query, whereClause, function(err, res){
+         if(err){
+             throw err;
+         }
+
+         if(res.length != 1){
+             console.log(itemId + " does not exist. Please make another selection.");
+             listProducts();
+             return;
+         }
+         console.log("Found it");
+         promptUser();
+         //connection.end();
+    });
     
  }
 
@@ -66,7 +94,7 @@ function listProducts()
              throw err;
          }
 
-         console.log(res);
+         //console.log(res);
          displayResults(res);
          promptUser();
     });
@@ -99,4 +127,4 @@ start();
 
 
 
-connection.end();
+//connection.end();
