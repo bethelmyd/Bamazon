@@ -44,8 +44,8 @@ function processSelection(whatToDo){
     //console.log(whatToDo.choice);
 
     switch(whatToDo.choice){
-        case "View Products for Sale": listProducts(""); break;
-        case "View Low Inventory": viewLowInventory(); break;
+        case "View Products for Sale": listProducts("1 = 1"); break;
+        case "View Low Inventory": getInventoryCutOff(); break;
         case "Add to Inventory": addToInventory(); break;
         case "Add New Product": addNewProduct(); break;
         case "Exit":         
@@ -57,13 +57,13 @@ function processSelection(whatToDo){
 
 function listProducts(whereClause)
 {
-    var query = "select item_id, product_name, price, department_name, stock_quantity from product "
+    var query = "select item_id, product_name, price, department_name, stock_quantity from product where "
     query += whereClause + " ";
     query += "order by department_name ASC, product_name ASC";
 
     //console.log(query);
 
-     connection.query(query, function(err, res){
+     connection.query(query, whereClause, function(err, res){
          if(err){
              throw err;
          }
@@ -89,8 +89,25 @@ function displayResults(results){
     mainMenu();
 };
 
-function viewLowInventory(){
-    mainMenu();
+function getInventoryCutOff(){
+    inquirer.prompt([
+            {
+                name: "cutoff",
+                message: "Enter the inventory cutoff: ",
+                type: "input",
+                validate: function(input){
+                    if(isNaN(input) || input.length == 0 || parseInt(input) < 5){
+                        return "Please enter a valid number >= 5.";
+                    }
+                    return true;
+                }
+            }
+    ]).then(viewLowInventory);
+    
+}
+
+function viewLowInventory(cutoffInput){
+    listProducts("stock_quantity < " + cutoffInput.cutoff);
 }
 
 function addToInventory(){
