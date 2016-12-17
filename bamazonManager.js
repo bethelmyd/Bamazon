@@ -46,7 +46,9 @@ function processSelection(whatToDo){
     switch(whatToDo.choice){
         case "View Products for Sale": listProducts("1 = 1"); break;
         case "View Low Inventory": getInventoryCutOff(); break;
-        case "Add to Inventory": getInventoryUpdateAmount(); break;
+        case "Add to Inventory": 
+                            products = []; //empty any previous updated products
+                            getInventoryUpdateAmount(); break;
         case "Add New Product": addNewProduct(); break;
         case "Exit":         
                     console.log("Bye!");
@@ -68,8 +70,9 @@ function listProducts(whereClause)
              throw err;
          }
 
-         //console.log(res);
+         //console.log(err);
          displayResults(res);
+         mainMenu();
     });
 }
 
@@ -86,7 +89,6 @@ function displayResults(results){
                             record.stock_quantity]);
     }
     console.log(ourTable.toString());
-    mainMenu();
 };
 
 function getInventoryCutOff(){
@@ -111,34 +113,46 @@ function viewLowInventory(cutoffInput){
 }
 
 function getInventoryUpdateAmount(){
-    inquirer.prompt([
-           {
-                name: "itemId",
-                message: "Which item would you like to update? (E or e - exit) ",
-                type: "input",
-                validate: function(input){
-                    if(input.length == 0){
-                        return "Please enter an item ID or (E or e) to exit."
-                    }
-                    return true;
-                }
-            },
+    var query = "select * from product "
+    query += "order by department_name ASC, product_name ASC";
+
+    //console.log(query);
+
+     connection.query(query, function(err, res){
+         if(err){
+             throw err;
+         }
+
+         //console.log(res);
+        displayResults(res);
+        inquirer.prompt([
             {
-                when: function (response) {
-                        return response.itemId.toUpperCase() != 'E';
-                    },
-                name: "updateAmount",
-                message: "Enter the amount to update: ",
-                type: "input",
-                validate: function(input){
-                    if(isNaN(input) || input.length == 0 || parseInt(input) < 5){
-                        return "Please enter a valid number >= 5.";
+                    name: "itemId",
+                    message: "Which item would you like to update? (E or e - exit) ",
+                    type: "input",
+                    validate: function(input){
+                        if(input.length == 0){
+                            return "Please enter an item ID or (E or e) to exit."
+                        }
+                        return true;
                     }
-                    return true;
+                },
+                {
+                    when: function (response) {
+                            return response.itemId.toUpperCase() != 'E';
+                        },
+                    name: "updateAmount",
+                    message: "Enter the amount to update: ",
+                    type: "input",
+                    validate: function(input){
+                        if(isNaN(input) || input.length == 0 || parseInt(input) < 0){
+                            return "Please enter a valid number >= 0.";
+                        }
+                        return true;
+                    }
                 }
-            }
-    ]).then(tryToUpdateToInventory);
-    
+        ]).then(tryToUpdateToInventory);
+    });    
 }
 
 function tryToUpdateToInventory(updateInput){
@@ -155,25 +169,26 @@ function tryToUpdateToInventory(updateInput){
     var whereClause = {
         item_id: itemId
     };
-     connection.query(query, whereClause, function(err, res){
+     connection.query(query, whereClause, function(err, result){
          if(err){
              throw err;
          }
 
-         if(res.length != 1){
+         if(result.length != 1){
              console.log(itemId + " does not exist. Please make another selection.");
              getInventoryUpdateAmount();
              return;
          }
 
-         var newStockQuantity = updateAmount + parseInt(res[0].stock_quantity);
-         updateQuantity(itemId, newStockQuantity);
+       // console.log(product);
+        var newStockQuantity = updateAmount + parseInt(result[0].stock_quantity);
+        updateQuantity(itemId, newStockQuantity, result);
          //connection.end();
     });
     
 }
 
-function updateQuantity(itemId, stockQuantity){
+function updateQuantity(itemId, stockQuantity, result){
     var query = "update product set stock_quantity = " + stockQuantity + " ";
     query += "where item_id = '" + itemId + "'";
 
@@ -181,9 +196,24 @@ function updateQuantity(itemId, stockQuantity){
          if(err){
              throw err;
          }
-
-         //console.log(res);
+        if(res !== null){
+            console.log("Item (" + itemId + ") successfully updated");
+            var product = new Product();
+            product.itemId = itemId;
+            product.productName = result[0].product_name;
+            product.price = result[0].price;
+            product.quantity = stockQuantity;
+            product.department = result[0].department_name;
+            products.push(product);
+            
+            showUpdatedProducts();
+        }
+        else{
+            console.log("Unable to update item (" + itemId + ")");
+        }
+        
         getInventoryUpdateAmount();
+        
     });    
 }
 
@@ -196,20 +226,17 @@ function addNewProduct(){
 function showUpdatedProducts(){
     if(products.length == 0) return;
     console.log("Currently updated:");
-    var total = 0;
-    var cartTable = new Table({
-        head: ['Product Name', 'Price (USD)', 'Quantity', 'Cost'],
-        colAligns: ['left', 'right', 'right', 'right']
+    var productTable = new Table({
+        head: ['Item ID', 'Product Name', 'Price (USD)', 'Department', 'Stock Quantity'],
+        colAligns: ['left', 'left', 'right', 'left', 'right']
     });
-    for(var i = 0; i < cart.length; i++){
-        var cartItem = cart[i];
-        total += cartItem.cost;
-       // console.log(JSON.parse(JSON.stringify(record)));
-        cartTable.push([cartItem.product_name, cartItem.price.toFixed(2), cartItem.quantity, cartItem.cost.toFixed(2)]);
+//    console.log("here " + productTable);
+    for(var i = 0; i < products.length; i++){
+        var product = products[i];
+        productTable.push([product.itemId, product.productName, product.price.toFixed(2), product.department, product.quantity]);
     }
-    
-    cartTable.push(["", "", "Total", total.toFixed(2)]);
-    console.log(cartTable.toString());
+    console.log(productTable.toString());
+//    console.log("here?");
 }
 
 // function start(){
