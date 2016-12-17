@@ -3,7 +3,7 @@
 var mysql = require("mysql");
 var Table = require("cli-table");
 var inquirer = require("inquirer");
-var CartItem = require("./cartItem.js");
+var Product = require("./product.js");
 
 /* Globals */
 var cart = [];
@@ -31,11 +31,11 @@ function promptUser()
     inquirer.prompt([
            {
                 name: "itemId",
-                message: "Which item would you like to buy? (E - exit) ",
+                message: "Which item would you like to buy? (E or e - exit) ",
                 type: "input",
                 validate: function(input){
                     if(input.length == 0){
-                        return "Please make a selection."
+                        return "Please enter an item ID or (E or e) to exit."
                     }
                     return true;
                 }
@@ -48,7 +48,7 @@ function promptUser()
                 message: "Enter the quantity: ",
                 type: "input",
                 validate: function(input){
-                    if(isNaN(input) || input.length == 0 || parseInt(input) < 0){
+                    if(isNaN(input) || input.length == 0 || parseInt(input) < 1){
                         return "Please enter a valid number >= 0.";
                     }
                     return true;
@@ -128,8 +128,8 @@ function tryToFillOrder(itemId, quantity, result){
         return;
     }
     console.log("Item added to cart.");
-    var cartItem = new CartItem();
-    cartItem.product_name = result[0].product_name;
+    var cartItem = new Product();
+    cartItem.productName = result[0].product_name;
     cartItem.price = result[0].price;
     cartItem.quantity = quantity;
     cartItem.cost = quantity * cartItem.price;
@@ -167,7 +167,7 @@ function showCart(){
         var cartItem = cart[i];
         total += cartItem.cost;
        // console.log(JSON.parse(JSON.stringify(record)));
-        cartTable.push([cartItem.product_name, cartItem.price.toFixed(2), cartItem.quantity, cartItem.cost.toFixed(2)]);
+        cartTable.push([cartItem.productName, cartItem.price.toFixed(2), cartItem.quantity, cartItem.cost.toFixed(2)]);
     }
     
     cartTable.push(["", "", "Total", total.toFixed(2)]);

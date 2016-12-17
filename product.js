@@ -1,10 +1,10 @@
 "use strict";
 
-var CartItem = function(){
+var Product = function(){
     this.productName = "";
     this.price = 0;
     this.quantity = 0;
     this.cost = 0;
 };
 
-module.exports = CartItem;
+module.exports = Product;
