@@ -49,7 +49,7 @@ function processSelection(whatToDo){
         case "Add to Inventory": 
                             products = []; //empty any previous updated products
                             getInventoryUpdateAmount(); break;
-        case "Add New Product": addNewProduct(); break;
+        case "Add New Product": getProductInfo(); break;
         case "Exit":         
                     console.log("Bye!");
                     connection.end();
@@ -218,8 +218,101 @@ function updateQuantity(itemId, stockQuantity, result){
 }
 
 
-function addNewProduct(){
-    mainMenu();
+function getProductInfo(){
+    inquirer.prompt([
+            {
+                    name: "itemId",
+                    message: "Enter item ID or (E or e) to end data entry) ",
+                    type: "input",
+                    validate: function(input){
+                        if(input.length == 0){
+                            return "Please enter an item ID or (E or e) to stop."
+                        }
+                        return true;
+                    }
+            },
+            {
+                    when: function (response) {
+                            return response.itemId.toUpperCase() != 'E';
+                        },
+                    name: "productName",
+                    message: "Enter product name: ",
+                    type: "input",
+                    validate: function(input){
+                        if(input.length == 0){
+                            return "Please enter a product name."
+                        }
+                        return true;
+                    }
+            },
+            {
+                    name: "price",
+                    message: "Enter the price ",
+                    type: "input",
+                    validate: function(input){
+                        if(input.length == 0 || isNaN(input) || parseFloat(input) <= 0){
+                            return "Please enter a value > 0."
+                        }
+                        return true;
+                    }
+            },
+            {
+                    name: "quantity",
+                    message: "Enter the quantity in stock ",
+                    type: "input",
+                    validate: function(input){
+                        if(input.length == 0 || isNaN(input) || parseInt(input) <= 0){
+                            return "Please enter a value > 0."
+                        }
+                        return true;
+                    }
+            },
+            {
+                    name: "department",
+                    message: "Enter the department: ",
+                    type: "input",
+                    validate: function(input){
+                        if(input.length == 0){
+                            return "Please enter a department name."
+                        }
+                        return true;
+                    }
+            }
+    ]).then(addToProductTable);
+}
+
+function addToProductTable(data){
+    if(data.itemId.toUpperCase() === "E"){
+        mainMenu();
+        return;
+    }
+
+    //see if you already have the item
+    var query = "select item_id from product where ?";
+    var where = {
+        item_id: data.itemId
+    };
+    connection.query(query, where, function(err, res){
+        if(err)
+        {
+            throw err;
+        }
+
+        if(res.length == 1){
+            console.log("Item already in database.");
+            getProductInfo();
+            return;
+        }
+
+        query = "insert into product values (?, ?, ?, ?, ?)";
+        var values = [data.itemId, data.productName, data.department, parseFloat(data.price).toFixed(2), parseInt(data.quantity)];
+        connection.query(query, values, function(err, res){
+            if(err) throw err;
+            console.log("Item (" + data.itemId + ") successfully added.");
+            displayResults(res);
+            getProductInfo();
+        });
+    });
 }
 
 
