@@ -230,11 +230,21 @@ function getProductInfo(){
                         }
                         return true;
                     }
-            },
+            }
+           ]).then(getRest);
+}
+
+var globalIdVar = "";
+
+function getRest(response){
+    if(response.itemId.toUpperCase() === "E"){
+        mainMenu();
+        return;
+    }
+
+    globalIdVar = response.itemId;
+    inquirer.prompt([
             {
-                    when: function (response) {
-                            return response.itemId.toUpperCase() != 'E';
-                        },
                     name: "productName",
                     message: "Enter product name: ",
                     type: "input",
@@ -277,20 +287,16 @@ function getProductInfo(){
                         }
                         return true;
                     }
-            }
+            }        
     ]).then(addToProductTable);
 }
 
 function addToProductTable(data){
-    if(data.itemId.toUpperCase() === "E"){
-        mainMenu();
-        return;
-    }
 
     //see if you already have the item
     var query = "select item_id from product where ?";
     var where = {
-        item_id: data.itemId
+        item_id: globalIdVar
     };
     connection.query(query, where, function(err, res){
         if(err)
@@ -305,11 +311,11 @@ function addToProductTable(data){
         }
 
         query = "insert into product values (?, ?, ?, ?, ?)";
-        var values = [data.itemId, data.productName, data.department, parseFloat(data.price).toFixed(2), parseInt(data.quantity)];
+        var values = [globalIdVar, data.productName, data.department, parseFloat(data.price).toFixed(2), parseInt(data.quantity)];
         connection.query(query, values, function(err, res){
             if(err) throw err;
-            console.log("Item (" + data.itemId + ") successfully added.");
-            displayResults(res);
+            console.log("Item (" + globalIdVar + ") successfully added.");
+//            displayResults(res);
             getProductInfo();
         });
     });
